@@ -15,9 +15,9 @@ function App() {
   // ----------------------------
   const fetchStatus = () => {
     fetch("http://localhost:5000/system_status")
-      .then(res => res.json())
-      .then(data => setStatus(data))
-      .catch(err => console.error(err));
+      .then((res) => res.json())
+      .then((data) => setStatus(data))
+      .catch((err) => console.error(err));
   };
 
   // ----------------------------
@@ -25,9 +25,9 @@ function App() {
   // ----------------------------
   const fetchInspections = () => {
     fetch("http://localhost:5000/inspections")
-      .then(res => res.json())
-      .then(data => setInspections(data))
-      .catch(err => console.error(err));
+      .then((res) => res.json())
+      .then((data) => setInspections(data))
+      .catch((err) => console.error(err));
   };
 
   // ----------------------------
@@ -46,41 +46,32 @@ function App() {
   }, []);
 
   // ----------------------------
-  // Commands
+  // Commands (Updated)
   // ----------------------------
-  const handleStart = () => {
+  const handleBeginInspection = () => {
     fetch("http://localhost:5000/command", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "start" })
-    });
-  };
-
-  const handleEmergency = () => {
-    fetch("http://localhost:5000/emergency_stop", {
-      method: "POST"
-    });
+      body: JSON.stringify({ type: "begin_inspection" })
+    }).catch((err) => console.error(err));
   };
 
   const getStateColor = () => {
     if (!status) return "black";
-    if (status.system_state === "RUNNING") return "green";
-    if (status.system_state === "EMERGENCY") return "red";
-    if (status.system_state === "PAUSED") return "orange";
-    return "gray";
+    if (status.system_state === "INSPECTING") return "green";
+    if (status.system_state === "PAUSED") return "orange"; // optional future use
+    if (status.system_state === "EMERGENCY") return "red"; // optional future use
+    return "gray"; // IDLE, unknown
   };
 
   return (
     <div className="app-container">
-      <h1 className="title">
-        Drone-Based Concrete Inspection – Ground Station
-      </h1>
+      <h1 className="title">Drone-Based Concrete Inspection – Ground Station</h1>
 
       {/* CONTROL BAR COMPONENT */}
       <ControlBar
         status={status}
-        onStart={handleStart}
-        onEmergency={handleEmergency}
+        onBeginInspection={handleBeginInspection}
         getStateColor={getStateColor}
       />
 

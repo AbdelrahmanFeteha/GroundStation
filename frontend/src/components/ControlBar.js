@@ -1,4 +1,4 @@
-function ControlBar({ status, onStart, onEmergency, getStateColor }) {
+function ControlBar({ status, onBeginInspection, getStateColor }) {
   return (
     <div className="control-bar">
       <span className="system-state">
@@ -13,12 +13,8 @@ function ControlBar({ status, onStart, onEmergency, getStateColor }) {
         </span>
       </span>
 
-      <button onClick={onStart} className="start-button">
-        START INSPECTION
-      </button>
-
-      <button onClick={onEmergency} className="emergency-button">
-        EMERGENCY STOP
+      <button onClick={onBeginInspection} className="begin-button">
+        BEGIN INSPECTION
       </button>
     </div>
   );

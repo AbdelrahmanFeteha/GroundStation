@@ -79,22 +79,12 @@ button {
   transition: 0.2s ease;
 }
 
-/* START BUTTON – make it pop */
-.start-button {
+/* BEGIN INSPECTION BUTTON */
+.begin-button {
   background-color: #22c55e;
   color: black;
 }
 
-.start-button:hover {
+.begin-button:hover {
   background-color: #16a34a;
-}
-
-/* EMERGENCY BUTTON */
-.emergency-button {
-  background-color: #dc2626;
-  color: white;
-}
-
-.emergency-button:hover {
-  background-color: #b91c1c;
 }

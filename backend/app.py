@@ -32,30 +32,35 @@ def ping():
 # -------------------------------------------------
 # COMMANDS
 # -------------------------------------------------
+# Updated spec:
+# - No Pixhawk interface (no ARM / drone control states)
+# - Ground station only tells Jetson to begin an inspection cycle
+#   (camera + mic capture + impactor activation)
+# - Removed Emergency Stop endpoint (RC pilot handles flight safety)
 
 @app.route("/command", methods=["POST"])
 def set_command():
     global current_command, system_state
 
     data = request.json
-
     if not data or "type" not in data:
         return jsonify({"status": "error", "message": "Invalid command"}), 400
 
-    current_command = data
-
     cmd_type = data["type"]
+    current_command = data  # store last command for Jetson to poll if needed
 
-    if cmd_type == "start":
-        system_state = "RUNNING"
-    elif cmd_type == "pause":
-        system_state = "PAUSED"
-    elif cmd_type == "arm":
-        system_state = "ARMED"
+    # New command set for updated system behavior
+    if cmd_type == "begin_inspection":
+        system_state = "INSPECTING"
+
     elif cmd_type == "clear":
         system_state = "IDLE"
+        current_command = {"type": "none"}
 
-    return jsonify({"status": "accepted"})
+    else:
+        return jsonify({"status": "error", "message": f"Unknown command: {cmd_type}"}), 400
+
+    return jsonify({"status": "accepted", "system_state": system_state, "command": current_command})
 
 
 @app.route("/command", methods=["GET"])
@@ -67,26 +72,12 @@ def get_command():
 
 
 # -------------------------------------------------
-# EMERGENCY STOP
-# -------------------------------------------------
-
-@app.route("/emergency_stop", methods=["POST"])
-def emergency_stop():
-    global system_state, current_command
-
-    system_state = "EMERGENCY"
-    current_command = {"type": "emergency_stop"}
-
-    return jsonify({"status": "EMERGENCY"})
-
-
-# -------------------------------------------------
 # INSPECTIONS (WITH BASE64 IMAGE SUPPORT)
 # -------------------------------------------------
 
 @app.route("/inspection", methods=["POST"])
 def add_inspection():
-    global inspections
+    global inspections, system_state, current_command
 
     data = request.json
 
@@ -142,6 +133,11 @@ def add_inspection():
     inspection_record["image_url"] = image_url
 
     inspections.append(inspection_record)
+
+    # Updated behavior:
+    # Once Jetson posts the inspection result, we consider that inspection cycle complete.
+    system_state = "IDLE"
+    current_command = {"type": "none"}
 
     return jsonify({"status": "stored"})
 
