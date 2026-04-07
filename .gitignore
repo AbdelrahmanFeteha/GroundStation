@@ -13,3 +13,19 @@ __pycache__/
 # Environment variables
 .env
 .env.*
+
+# =========================
+# Node (Frontend)
+# =========================
+node_modules/
+
+# =========================
+# Runtime inspection images (generated at runtime)
+# =========================
+backend/images/insp_*.jpg
+# Sample images below are tracked explicitly via git add -f
+
+# =========================
+# Root-level lock file (not needed in repo)
+# =========================
+package-lock.json

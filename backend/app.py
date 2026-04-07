@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory
 import os
+import time
 import base64
 from flask_cors import CORS
 
@@ -14,6 +15,7 @@ system_state = "IDLE"
 current_command = {"type": "none"}
 inspections = []
 latest_telemetry = {}
+inspection_started_at = None   #added
 
 # Folder to store images
 IMAGE_FOLDER = "images"
@@ -28,6 +30,15 @@ os.makedirs(IMAGE_FOLDER, exist_ok=True)
 def ping():
     return jsonify({"status": "ok"})
 
+def check_timeout():
+    global system_state, current_command, inspection_started_at
+
+    if system_state == "INSPECTING" and inspection_started_at:
+        if time.time() - inspection_started_at > 10:
+            print("TIMEOUT → resetting")
+            system_state = "IDLE"
+            current_command = {"type": "none"}
+            inspection_started_at = None
 
 # -------------------------------------------------
 # COMMANDS
@@ -40,7 +51,8 @@ def ping():
 
 @app.route("/command", methods=["POST"])
 def set_command():
-    global current_command, system_state
+    
+    global current_command, system_state, inspection_started_at
 
     data = request.json
     if not data or "type" not in data:
@@ -52,6 +64,7 @@ def set_command():
     # New command set for updated system behavior
     if cmd_type == "begin_inspection":
         system_state = "INSPECTING"
+        inspection_started_at = time.time()
 
     elif cmd_type == "clear":
         system_state = "IDLE"
@@ -65,6 +78,7 @@ def set_command():
 
 @app.route("/command", methods=["GET"])
 def get_command():
+    check_timeout()
     return jsonify({
         "system_state": system_state,
         "command": current_command
@@ -138,6 +152,7 @@ def add_inspection():
     # Once Jetson posts the inspection result, we consider that inspection cycle complete.
     system_state = "IDLE"
     current_command = {"type": "none"}
+    inspection_started_at = None
 
     return jsonify({"status": "stored"})
 
@@ -199,6 +214,7 @@ def get_telemetry():
 
 @app.route("/system_status", methods=["GET"])
 def system_status():
+    check_timeout()
     return jsonify({
         "system_state": system_state,
         "current_command": current_command,
