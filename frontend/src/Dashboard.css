@@ -88,3 +88,36 @@ button {
 .begin-button:hover {
   background-color: #16a34a;
 }
+
+/* SIMULATE CRACKED BUTTON */
+.simulate-crack-button {
+  background-color: #dc2626;
+  color: white;
+}
+
+.simulate-crack-button:hover {
+  background-color: #b91c1c;
+}
+
+/* SIMULATE INTACT BUTTON */
+.simulate-intact-button {
+  background-color: #2563eb;
+  color: white;
+}
+
+.simulate-intact-button:hover {
+  background-color: #1d4ed8;
+}
+
+/* PLAY/PAUSE BUTTON */
+.play-button {
+  background-color: #3b82f6;
+  color: white;
+  width: 100%;
+  padding: 10px 0;
+  font-size: 15px;
+}
+
+.play-button:hover {
+  background-color: #2563eb;
+}

@@ -17,9 +17,13 @@ inspections = []
 latest_telemetry = {}
 inspection_started_at = None   #added
 
-# Folder to store images
+# Folders to store images, audio, and spectrograms
 IMAGE_FOLDER = "images"
+AUDIO_FOLDER = "audio"
+SPECTROGRAM_FOLDER = "spectrograms"
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
+os.makedirs(AUDIO_FOLDER, exist_ok=True)
+os.makedirs(SPECTROGRAM_FOLDER, exist_ok=True)
 
 
 # -------------------------------------------------
@@ -63,6 +67,14 @@ def set_command():
 
     # New command set for updated system behavior
     if cmd_type == "begin_inspection":
+        system_state = "INSPECTING"
+        inspection_started_at = time.time()
+
+    elif cmd_type == "simulate_cracked":
+        system_state = "INSPECTING"
+        inspection_started_at = time.time()
+
+    elif cmd_type == "simulate_intact":
         system_state = "INSPECTING"
         inspection_started_at = time.time()
 
@@ -132,7 +144,6 @@ def add_inspection():
             with open(file_path, "wb") as f:
                 f.write(image_bytes)
 
-            # URL that frontend can use
             image_url = f"/images/{filename}"
 
         except Exception as e:
@@ -141,10 +152,100 @@ def add_inspection():
                 "message": f"Image decoding failed: {str(e)}"
             }), 400
 
-    # Store inspection (without full base64 string)
+    # Handle optional base64 audio
+    audio_url = None
+
+    if "audio" in data:
+        try:
+            audio_data = data["audio"]
+
+            # Remove base64 header if present (e.g. "data:audio/wav;base64,")
+            if "base64," in audio_data:
+                audio_data = audio_data.split("base64,")[1]
+
+            audio_bytes = base64.b64decode(audio_data)
+
+            filename = f"{data['inspection_id']}.wav"
+            file_path = os.path.join(AUDIO_FOLDER, filename)
+
+            with open(file_path, "wb") as f:
+                f.write(audio_bytes)
+
+            audio_url = f"/audio/{filename}"
+
+        except Exception as e:
+            return jsonify({
+                "status": "error",
+                "message": f"Audio decoding failed: {str(e)}"
+            }), 400
+
+    # Handle optional base64 spectrogram image
+    spectrogram_url = None
+
+    if "spectrogram" in data:
+        try:
+            spec_data = data["spectrogram"]
+
+            if "base64," in spec_data:
+                spec_data = spec_data.split("base64,")[1]
+
+            spec_bytes = base64.b64decode(spec_data)
+
+            filename = f"{data['inspection_id']}_spectrogram.png"
+            file_path = os.path.join(SPECTROGRAM_FOLDER, filename)
+
+            with open(file_path, "wb") as f:
+                f.write(spec_bytes)
+
+            spectrogram_url = f"/spectrograms/{filename}"
+
+        except Exception as e:
+            return jsonify({
+                "status": "error",
+                "message": f"Spectrogram decoding failed: {str(e)}"
+            }), 400
+
+    # Handle optional visual object (image model results + embedded image)
+    visual_record = None
+
+    if "visual" in data:
+        visual_record = data["visual"].copy()
+
+        if visual_record.get("image"):
+            try:
+                vis_data = visual_record["image"]
+
+                if "base64," in vis_data:
+                    vis_data = vis_data.split("base64,")[1]
+
+                vis_bytes = base64.b64decode(vis_data)
+
+                filename = f"{data['inspection_id']}_visual.jpg"
+                file_path = os.path.join(IMAGE_FOLDER, filename)
+
+                with open(file_path, "wb") as f:
+                    f.write(vis_bytes)
+
+                visual_record["image_url"] = f"/images/{filename}"
+
+            except Exception as e:
+                return jsonify({
+                    "status": "error",
+                    "message": f"Visual image decoding failed: {str(e)}"
+                }), 400
+
+        visual_record.pop("image", None)
+
+    # Store inspection (without full base64 strings)
     inspection_record = data.copy()
     inspection_record.pop("image", None)
+    inspection_record.pop("audio", None)
+    inspection_record.pop("spectrogram", None)
+    inspection_record.pop("visual", None)
     inspection_record["image_url"] = image_url
+    inspection_record["audio_url"] = audio_url
+    inspection_record["spectrogram_url"] = spectrogram_url
+    inspection_record["visual"] = visual_record
 
     inspections.append(inspection_record)
 
@@ -181,6 +282,24 @@ def get_single_inspection(inspection_id):
 @app.route("/images/<filename>", methods=["GET"])
 def serve_image(filename):
     return send_from_directory(IMAGE_FOLDER, filename)
+
+
+# -------------------------------------------------
+# Serve Stored Audio
+# -------------------------------------------------
+
+@app.route("/audio/<filename>", methods=["GET"])
+def serve_audio(filename):
+    return send_from_directory(AUDIO_FOLDER, filename)
+
+
+# -------------------------------------------------
+# Serve Stored Spectrograms
+# -------------------------------------------------
+
+@app.route("/spectrograms/<filename>", methods=["GET"])
+def serve_spectrogram(filename):
+    return send_from_directory(SPECTROGRAM_FOLDER, filename)
 
 
 # -------------------------------------------------

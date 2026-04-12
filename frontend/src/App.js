@@ -48,13 +48,17 @@ function App() {
   // ----------------------------
   // Commands (Updated)
   // ----------------------------
-  const handleBeginInspection = () => {
+  const sendCommand = (type) => {
     fetch("http://localhost:5000/command", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "begin_inspection" })
+      body: JSON.stringify({ type })
     }).catch((err) => console.error(err));
   };
+
+  const handleBeginInspection  = () => sendCommand("begin_inspection");
+  const handleSimulateCracked  = () => sendCommand("simulate_cracked");
+  const handleSimulateIntact   = () => sendCommand("simulate_intact");
 
   const getStateColor = () => {
     if (!status) return "black";
@@ -72,6 +76,8 @@ function App() {
       <ControlBar
         status={status}
         onBeginInspection={handleBeginInspection}
+        onSimulateCracked={handleSimulateCracked}
+        onSimulateIntact={handleSimulateIntact}
         getStateColor={getStateColor}
       />
 
@@ -88,7 +94,7 @@ function App() {
         <VisionPanel selectedInspection={selectedInspection} />
 
         {/* RIGHT PANEL */}
-        <AcousticPanel />
+        <AcousticPanel selectedInspection={selectedInspection} />
       </div>
     </div>
   );
