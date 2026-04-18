@@ -179,7 +179,7 @@ The frontend is a single-page React application with no routing. It polls the ba
 App.js                  — Root component, polling logic, command handlers, state owner
 ├── ControlBar.js       — Operator command buttons + system state indicator
 ├── InspectionList.js   — Scrollable list of past inspections; click to select
-├── VisionPanel.js      — Visual ML results: image, severity badge, geometry table
+├── VisionPanel.js      — Visual ML results: image, crack decision, geometry table
 └── AcousticPanel.js    — Audio ML results: playback, crack decision, spectrogram
 ```
 
@@ -225,10 +225,6 @@ Displays the contents of `selectedInspection.visual` — the output of the visua
 
 - **Crack image** — the JPEG frame from the camera, served from `/images/<id>_visual.jpg`
 - **Crack Detected** — boolean, coloured red (Yes) or green (No)
-- **Severity badge** — pill-shaped badge with colour coding:
-  - `Minor` — dark green background, green text
-  - `Moderate` — dark amber background, amber text
-  - `Severe` — dark red background, red text
 - **Confidence in result** — softmax probability of the predicted class, expressed as a percentage
 - **Inference time** — seconds taken by the visual model on the Jetson
 - **Crack geometry table** — shown only when `has_crack` is true; displays mask area, skeleton length, average width, maximum width, and branch point count
@@ -270,7 +266,6 @@ Each inspection record stored by the backend has the following structure. All fi
     "has_crack":            true,
     "confidence":           0.91,
     "severity_score":       0.42,
-    "severity_level":       "Moderate",
     "crack_geometry": {
       "mask_area_px":       1840,
       "length_px":          312,
@@ -286,7 +281,7 @@ Each inspection record stored by the backend has the following structure. All fi
 
 **Top-level acoustic fields** (`has_crack`, `confidence`, `dominant_frequency_hz`) come from the audio 1D CNN model.  
 **`visual` object** contains all outputs of the visual crack detection model, including the annotated image URL and crack geometry metrics.  
-When `has_crack` is `false`, `severity_score`, `severity_level`, and all `crack_geometry` sub-fields are `null`.
+When `has_crack` is `false`, `severity_score` and all `crack_geometry` sub-fields are `null`.
 
 ---
 
@@ -342,7 +337,6 @@ The visual model runs on the camera image captured at the time of inspection. It
 | `has_crack` | bool | Whether a crack is detected in the image |
 | `confidence` | float 0–1 | Softmax probability of the predicted class |
 | `severity_score` | float 0–1 | Continuous severity estimate (null if no crack) |
-| `severity_level` | string | `"Minor"` / `"Moderate"` / `"Severe"` (null if no crack) |
 | `crack_geometry.mask_area_px` | int | Total crack pixel area in the segmentation mask |
 | `crack_geometry.length_px` | int | Crack skeleton length in pixels |
 | `crack_geometry.avg_width_px` | float | Mean crack width in pixels |
