@@ -1,25 +1,25 @@
-function ControlBar({ status, onBeginInspection, onSimulateCracked, onSimulateIntact, getStateColor }) {
+function ControlBar() {
   return (
-    <div className="control-bar">
-      <span className="system-state">
-        System State:
-        <span style={{ marginLeft: "10px", color: getStateColor() }}>
-          {status ? status.system_state : "Loading..."}
-        </span>
+    <header className="topbar">
+      <div className="brand">
+        <div className="brand-mark" aria-hidden="true" />
+        <div className="brand-text">
+          <span className="brand-kicker">GS // v1</span>
+          <span className="brand-name">Ground Station</span>
+        </div>
+      </div>
+
+      <span className="topbar-center-tag">
+        American University of Sharjah
       </span>
 
-      <button onClick={onBeginInspection} className="begin-button">
-        BEGIN INSPECTION
-      </button>
-
-      <button onClick={onSimulateCracked} className="simulate-crack-button">
-        SIMULATE CRACKED
-      </button>
-
-      <button onClick={onSimulateIntact} className="simulate-intact-button">
-        SIMULATE INTACT
-      </button>
-    </div>
+      <div style={{ textAlign: "right" }}>
+        <p className="hero-team-project">Senior Design Project · Group 32</p>
+        <p className="hero-team-names">
+          Abdelrahman Feteha · Ahmad ElShafie · Louy Abbas
+        </p>
+      </div>
+    </header>
   );
 }
 

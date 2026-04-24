@@ -60,42 +60,63 @@ function App() {
   const handleSimulateCracked  = () => sendCommand("simulate_cracked");
   const handleSimulateIntact   = () => sendCommand("simulate_intact");
 
-  const getStateColor = () => {
-    if (!status) return "black";
-    if (status.system_state === "INSPECTING") return "green";
-    if (status.system_state === "PAUSED") return "orange"; // optional future use
-    if (status.system_state === "EMERGENCY") return "red"; // optional future use
-    return "gray"; // IDLE, unknown
-  };
+
 
   return (
     <div className="app-container">
-      <h1 className="title">Drone-Based Concrete Inspection – Ground Station</h1>
+      {/* TOP BAR */}
+      <ControlBar />
 
-      {/* CONTROL BAR COMPONENT */}
-      <ControlBar
-        status={status}
-        onBeginInspection={handleBeginInspection}
-        onSimulateCracked={handleSimulateCracked}
-        onSimulateIntact={handleSimulateIntact}
-        getStateColor={getStateColor}
-      />
+      {/* HERO TITLE BLOCK */}
+      <section className="hero fade-up">
+        <div>
+          <h1 className="hero-title">
+            Ground Station<em>.</em>
+          </h1>
+          <p className="hero-sub">
+            Drone-Based Impact Sounding and Vision System for Non-Destructive Concrete Inspection
+          </p>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="state-pill" data-state={status ? status.system_state : "IDLE"}>
+            <span className="state-dot" />
+            <span className="state-pill-label">State</span>
+            <span>{status ? status.system_state : "CONNECTING"}</span>
+          </div>
+          <button onClick={handleBeginInspection} className="btn btn-primary begin-button" type="button">
+            <svg className="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5v14l11-7z" fill="currentColor" stroke="none" />
+            </svg>
+            Begin Inspection
+          </button>
+          <button onClick={handleSimulateCracked} className="btn btn-alert" type="button">
+            Simulate Cracked
+          </button>
+          <button onClick={handleSimulateIntact} className="btn btn-safe" type="button">
+            Simulate Intact
+          </button>
+        </div>
+      </section>
 
       {/* MAIN GRID */}
       <div className="grid-layout">
-        {/* LEFT PANEL */}
-        <InspectionList
-          inspections={inspections}
-          selectedInspection={selectedInspection}
-          sessionStart={status?.session_start}
-          onSelect={setSelectedInspection}
-        />
+        <div className="inspection-panel fade-up delay-1">
+          <InspectionList
+            inspections={inspections}
+            selectedInspection={selectedInspection}
+            sessionStart={status?.session_start}
+            onSelect={setSelectedInspection}
+          />
+        </div>
 
-        {/* CENTER PANEL */}
-        <VisionPanel selectedInspection={selectedInspection} />
+        <div className="vision-panel fade-up delay-2">
+          <VisionPanel selectedInspection={selectedInspection} />
+        </div>
 
-        {/* RIGHT PANEL */}
-        <AcousticPanel selectedInspection={selectedInspection} />
+        <div className="acoustic-panel fade-up delay-3">
+          <AcousticPanel selectedInspection={selectedInspection} />
+        </div>
       </div>
     </div>
   );

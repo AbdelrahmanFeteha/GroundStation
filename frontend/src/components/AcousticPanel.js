@@ -28,59 +28,137 @@ function AcousticPanel({ selectedInspection }) {
 
   const handleEnded = () => setIsPlaying(false);
 
+  const hasSelection = Boolean(selectedInspection);
+  const hasAudio = hasSelection && Boolean(selectedInspection.audio_url);
+
   return (
     <div className="panel">
-      <h3>Acoustic Results</h3>
+      <div className="panel-header">
+        <div>
+          <p className="panel-eyebrow">Channel · 02</p>
+          <h3 className="panel-title">Acoustic</h3>
+        </div>
+        {hasSelection && (
+          <span className="panel-count">
+            ID · {selectedInspection.inspection_id}
+          </span>
+        )}
+      </div>
 
-      {selectedInspection ? (
-        selectedInspection.audio_url ? (
-          <>
-            <p style={{ marginBottom: 12, color: "#9ca3af", fontSize: 13 }}>
-              ID: {selectedInspection.inspection_id}
-            </p>
+      {!hasSelection && (
+        <div className="panel-empty">
+          <div className="panel-empty-mark" />
+          <span>Select an inspection to play acoustic capture</span>
+        </div>
+      )}
 
-            <audio
-              ref={audioRef}
-              src={`http://localhost:5000${selectedInspection.audio_url}`}
-              onEnded={handleEnded}
-            />
+      {hasSelection && !hasAudio && (
+        <div className="panel-empty">
+          <div className="panel-empty-mark" />
+          <span>No audio for this inspection.</span>
+        </div>
+      )}
 
-            <button className="play-button" onClick={handlePlayPause}>
-              {isPlaying ? "Pause" : "Play Audio"}
+      {hasAudio && (
+        <>
+          <audio
+            ref={audioRef}
+            src={`http://localhost:5000${selectedInspection.audio_url}`}
+            onEnded={handleEnded}
+          />
+
+          {/* Player shell */}
+          <div className="play-shell">
+            <button
+              className="play-btn play-button"
+              onClick={handlePlayPause}
+              aria-label={isPlaying ? "Pause" : "Play"}
+              type="button"
+            >
+              {isPlaying ? (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="6" y="5" width="4" height="14" rx="1" />
+                  <rect x="14" y="5" width="4" height="14" rx="1" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              )}
             </button>
 
-            <div style={{ marginTop: 14 }}>
-              <p style={{ margin: "6px 0" }}>
-                Crack Detected:{" "}
-                <strong style={{ color: selectedInspection.has_crack ? "#f87171" : "#4ade80" }}>
-                  {selectedInspection.has_crack ? "Yes" : "No"}
-                </strong>
-              </p>
-              <p style={{ margin: "6px 0" }}>
-                Confidence in result:{" "}
-                <strong>{(selectedInspection.confidence * 100).toFixed(1)}%</strong>
-              </p>
-              {selectedInspection.dominant_frequency_hz != null && (
-                <p style={{ margin: "6px 0" }}>
-                  Dominant Frequency:{" "}
-                  <strong>{selectedInspection.dominant_frequency_hz.toFixed(1)} Hz</strong>
-                </p>
-              )}
+            <div className="play-meta">
+              <span className="play-meta-kicker">
+                {isPlaying ? "Playing" : "Ready"}
+              </span>
+              <span className="play-meta-id">
+                Sample · {selectedInspection.inspection_id}
+              </span>
             </div>
 
-            {selectedInspection.spectrogram_url && (
+            <div className={`waveform ${isPlaying ? "is-playing" : ""}`}>
+              <span /><span /><span /><span /><span /><span /><span />
+            </div>
+          </div>
+
+          {/* Verdict row */}
+          <div
+            className="verdict-row"
+            data-crack={String(Boolean(selectedInspection.has_crack))}
+          >
+            <span className="verdict-icon">
+              {selectedInspection.has_crack ? (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 8v5" />
+                  <path d="M12 16.5v.5" />
+                  <circle cx="12" cy="12" r="9" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 12l4 4 10-10" />
+                </svg>
+              )}
+            </span>
+
+            <div className="verdict-text">
+              <span className="verdict-kicker">Acoustic Verdict</span>
+              <span className="verdict-value">
+                {selectedInspection.has_crack
+                  ? "Crack Detected"
+                  : "Surface Intact"}
+              </span>
+            </div>
+
+            <span className="verdict-conf">
+              {(selectedInspection.confidence * 100).toFixed(1)}%
+            </span>
+          </div>
+
+          {/* Dominant frequency */}
+          {selectedInspection.dominant_frequency_hz != null && (
+            <div className="data-grid" style={{ marginBottom: 0 }}>
+              <div className="data-row">
+                <span className="data-row-label">Dominant Frequency</span>
+                <span className="data-row-value">
+                  {selectedInspection.dominant_frequency_hz.toFixed(1)} Hz
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Spectrogram */}
+          {selectedInspection.spectrogram_url && (
+            <div className="spectrogram-wrap">
               <img
                 src={`http://localhost:5000${selectedInspection.spectrogram_url}`}
                 alt="Frequency Spectrogram"
-                style={{ width: "100%", marginTop: 16, borderRadius: 6 }}
               />
-            )}
-          </>
-        ) : (
-          <p style={{ color: "#9ca3af" }}>No audio for this inspection.</p>
-        )
-      ) : (
-        <p>No inspection selected.</p>
+              <div className="spectrogram-caption">
+                Frequency · Time Spectrogram
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
