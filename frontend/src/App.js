@@ -87,6 +87,7 @@ function App() {
         <InspectionList
           inspections={inspections}
           selectedInspection={selectedInspection}
+          sessionStart={status?.session_start}
           onSelect={setSelectedInspection}
         />
 

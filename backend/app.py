@@ -15,20 +15,33 @@ CORS(app)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///groundstation.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "connect_args": {
+        "check_same_thread": False,
+        "timeout": 30,
+    }
+}
 
 db.init_app(app)
 
 with app.app_context():
     db.create_all()
+    db.session.execute(db.text("PRAGMA journal_mode=WAL"))
+    db.session.commit()
+
+@app.teardown_appcontext
+def shutdown_session(_exception=None):
+    db.session.remove()
 
 # -------------------------------------------------
 # In-Memory State
 # -------------------------------------------------
 
-system_state        = "IDLE"
-current_command     = {"type": "none"}
-latest_telemetry    = {}
+system_state          = "IDLE"
+current_command       = {"type": "none"}
+latest_telemetry      = {}
 inspection_started_at = None
+SESSION_START         = datetime.now(timezone.utc).isoformat()
 
 # Folders to store images, audio, and spectrograms
 IMAGE_FOLDER       = "images"
@@ -52,7 +65,7 @@ def check_timeout():
     global system_state, current_command, inspection_started_at
 
     if system_state == "INSPECTING" and inspection_started_at:
-        if time.time() - inspection_started_at > 10:
+        if time.time() - inspection_started_at > 60:
             print("TIMEOUT → resetting")
             system_state          = "IDLE"
             current_command       = {"type": "none"}
@@ -207,7 +220,11 @@ def add_inspection():
             )
             db.session.add(crack_geo)
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": f"Database error: {str(e)}"}), 500
 
     system_state          = "IDLE"
     current_command       = {"type": "none"}
@@ -279,6 +296,7 @@ def system_status():
         "system_state":     system_state,
         "current_command":  current_command,
         "inspection_count": Inspection.query.count(),
+        "session_start":    SESSION_START,
     })
 
 
