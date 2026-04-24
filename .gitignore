@@ -20,6 +20,11 @@ __pycache__/
 node_modules/
 
 # =========================
+# SQLite database (runtime data)
+# =========================
+backend/groundstation.db
+
+# =========================
 # Runtime inspection images (generated at runtime)
 # =========================
 backend/images/insp_*.jpg
